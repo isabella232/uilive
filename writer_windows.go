@@ -8,8 +8,9 @@ import (
 	"strings"
 	"syscall"
 	"unsafe"
+
 	"github.com/mattn/go-isatty"
-)
+	)
 
 var kernel32 = syscall.NewLazyDLL("kernel32.dll")
 
@@ -46,18 +47,23 @@ type consoleScreenBufferInfo struct {
 	maximumWindowSize coord
 }
 
-func (w *Writer) clearLines() {
+func (w *Writer) isAtty() (uintptr, bool) {
 	f, ok := w.Out.(FdWriter)
-	if ok && !isatty.IsTerminal(f.Fd()) {
-		ok = false
-	} else if w.UnderlyingFile != nil {
-		ok = isatty.IsTerminal(w.UnderlyingFile.Fd())
+	if ok && isatty.IsTerminal(f.Fd()) {
+		return f.Fd(), true
 	}
+	if w.UnderlyingFile != nil && isatty.IsTerminal(w.UnderlyingFile.Fd()) {
+		return w.UnderlyingFile.Fd(), true
+	}
+	return 0, false
+}
+
+func (w *Writer) clearLines() {
+	fd, ok := w.isAtty()
 	if !ok {
 		_, _ = fmt.Fprint(w.Out, strings.Repeat(clear, w.lineCount))
 		return
 	}
-	fd := f.Fd()
 	var csbi consoleScreenBufferInfo
 	_, _, _ = procGetConsoleScreenBufferInfo.Call(fd, uintptr(unsafe.Pointer(&csbi)))
 
