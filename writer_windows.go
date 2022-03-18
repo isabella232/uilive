@@ -50,6 +50,8 @@ func (w *Writer) clearLines() {
 	f, ok := w.Out.(FdWriter)
 	if ok && !isatty.IsTerminal(f.Fd()) {
 		ok = false
+	} else if w.UnderlyingFile != nil {
+		ok = isatty.IsTerminal(w.UnderlyingFile.Fd())
 	}
 	if !ok {
 		_, _ = fmt.Fprint(w.Out, strings.Repeat(clear, w.lineCount))

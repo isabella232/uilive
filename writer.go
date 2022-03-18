@@ -35,6 +35,9 @@ type FdWriter interface {
 type Writer struct {
 	// Out is the writer to write to
 	Out io.Writer
+	// UnderlyingFile is the underlying FdWriter (Stdout, Stderr) that Out is
+	// writing to.
+	UnderlyingFile FdWriter
 
 	// RefreshInterval is the time the UI sould refresh
 	RefreshInterval time.Duration
